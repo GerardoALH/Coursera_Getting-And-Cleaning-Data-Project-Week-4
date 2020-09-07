@@ -3,7 +3,7 @@
 # Descompresión del archivo de información --------------------------------
 
 
-unzip(zipfile="getdata_projectfiles_UCI HAR Dataset.zip",exdir="./midtermdata")
+unzip(zipfile="getdata_projectfiles_UCI HAR Dataset.zip",exdir="./data")
 
 
 # Creación de fichero de trabajo
@@ -28,18 +28,18 @@ ytest <-  read.table(file.path(pathdata, "test", "y_test.txt"),header = FALSE)
 subject_test <-  read.table(file.path(pathdata, "test", "subject_test.txt"),header = FALSE)
 
 
-# Invoación de archivos de información
+# Invoación de archivos de información y asignación a objetos
 
 feature <-  read.table(file.path(pathdata, "features.txt"),header = FALSE)
 activityLabels <-  read.table(file.path(pathdata, "activity_labels.txt"),header = FALSE)
 
 # Asignación de encabezados o nombres de variables
 
-colnames(xtrain) <-  features[,2]
+colnames(xtrain) <-  feature[,2]
 colnames(ytrain) <-  "activityId"
 colnames(subject_train) <-  "subjectId"
 
-colnames(xtest) <-  features[,2]
+colnames(xtest) <-  feature[,2]
 colnames(ytest) <-  "activityId"
 colnames(subject_test) <-  "subjectId"
 
@@ -60,28 +60,42 @@ DS_COMPLETO <-  rbind(mrg_train, mrg_test)
 
 # Extracción de media y desviación estandar para cada medida ---------------------------------------------------
 
+colNames <-  colnames(DS_COMPLETO)
 
 
-# Lectura de la variable
+mean_and_std = (grepl("activityId" , colNames) | grepl("subjectId" , colNames) | grepl("mean.." , colNames) | grepl("std.." , colNames))
 
-NombresCol <-  colnames(DS_COMPLETO)
-
-# Creación de subgrupo de datos con todas las medias y desviaciones estandars correspondientes a activityvID y subjectID
-
-mean_and_std <- (grepl("activityId" , NombresCol) | grepl("subjectId" , NombresCol) | grepl("mean.." , NombresCol) | grepl("std.." , NombresCol))
-
-#A subtset has to be created to get the required dataset
-MediaYDesEst <- DS_COMPLETO[ , mean_and_std == TRUE]
+#Media_Y_DesEst = (grepl("activityId" , colNames) | grepl("subjectId" , colNames) | grepl("mean.." , colNames) | grepl("std.." , colNames))
 
 
-BD_Activity_Nombres <-  merge(MediaYDesEst, activityLabels, by='activityId', all.x=TRUE)
+setForMeanAndStd <- DS_COMPLETO[ , mean_and_std == TRUE]
 
 
-# New tidy set has to be created 
+#DS_PorMediaYDesEst <- DS_COMPLETO[ , Media_Y_DesEst == TRUE]
 
-BD_TIDY <- aggregate(. ~subjectId + activityId, BD_Activity_Nombres, mean)
-# secTidySet <- aggregate(. ~subjectId + activityId, BD_Activity_Nombres, mean)
 
-BD_TIDY <- BD_TIDY[order(BD_TIDY$subjectId, BD_TIDY$activityId), ]
+setWithActivityNames = merge(setForMeanAndStd, activityLabels, by='activityId', all.x=TRUE)
 
-View(BD_TIDY)
+View(setWithActivityNames)
+
+# DS_AtivityNames <- merge(DS_PorMediaYDesEst, activityLabels, by='activityId', all.x=TRUE)
+
+
+
+
+# Nuevo data set creado
+
+
+
+secTidySet <- setWithActivityNames[order(secTidySet$subjectId, secTidySet$activityId),]
+
+
+# Se escribe la salida de la nueva base de datos en formato de texto
+write.table(secTidySet, "secTidySet.txt", row.name=FALSE)
+
+
+
+
+
+
+
